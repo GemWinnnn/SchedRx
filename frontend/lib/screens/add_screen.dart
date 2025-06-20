@@ -174,26 +174,119 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
     }
     // Step 1: Image picker UI
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Medicine')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (_selectedImage != null)
-                Image.file(_selectedImage!, height: 200),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _pickImage,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Pick Prescription Image'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          title: const Text('Add medicine'),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          flexibleSpace: Container(
+            alignment: Alignment.bottomCenter,
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
               ),
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+            ),
+          ),
+        ),
+      ),
+      backgroundColor: const Color(0xFFFDFDFD),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 24.0,
+              horizontal: 8.0,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 360,
+                  height: 360,
+                  padding: const EdgeInsets.fromLTRB(68, 106, 68, 111),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD8EAFF),
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(
+                      color: const Color(0xFF0077FE),
+                      width: 1,
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(Icons.camera_alt, size: 56, color: Colors.black87),
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Text(
+                          'Submit your prescription here',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF1573DF),
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            height: 20 / 14,
+                            letterSpacing: 0.25,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'We will try to process this in a few seconds.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF000101),
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 12,
+                          height: 16 / 12,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: 358,
+                  height: 39,
+                  child: ElevatedButton(
+                    onPressed: () {}, // Always enabled
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF117CF5),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        side: const BorderSide(
+                          color: Color(0xFF0077FE),
+                          width: 1,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 4,
+                        horizontal: 142,
+                      ),
+                      textStyle: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        height: 1.2,
+                      ),
+                    ),
+                    child: const Text('Continue'),
+                  ),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 16),
+                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
