@@ -33,7 +33,9 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.light(
+          surface: Colors.white, // Definite white surface
+        ),
       ),
       home: const MainNavigation(),
     );
@@ -93,6 +95,14 @@ class _MainNavigationState extends State<MainNavigation> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        selectedItemColor: Color(0xFF117CF5), // Active: blue
+        unselectedItemColor: Color.fromARGB(
+          255,
+          157,
+          157,
+          157,
+        ), // Inactive: blue
+        showUnselectedLabels: true, // Always show text
       ),
     );
   }

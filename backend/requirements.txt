@@ -1,19 +1,24 @@
+# === FastAPI and Uvicorn ===
 fastapi==0.115.1
 uvicorn==0.34.3
+
+# === Core dependencies ===
 pydantic==2.11.7
 python-multipart==0.0.20
 
-# Optional and OCR tools
+# === NLP / OCR / ML ===
 pillow
 pytesseract
 fuzzywuzzy
 pandas
-opencv-python-headless
+opencv-python-headless  # headless version works better on servers
 scikit-learn
 matplotlib
 
+# === Avoid build issues ===
 numpy>=1.21.0,<2.0.0
 cython>=0.29.0
 
+# === spaCy + Med7 ===
 spacy==3.7.2
 en-core-med7-lg @ https://huggingface.co/kormilitzin/en_core_med7_lg/resolve/main/en_core_med7_lg-any-py3-none-any.whl
