@@ -1,27 +1,19 @@
-# === FastAPI and Uvicorn ===
 fastapi==0.115.1
 uvicorn==0.34.3
-
-# === Core dependencies ===
 pydantic==2.11.7
 python-multipart==0.0.20
 
-# === NLP - Use versions with pre-built wheels ===
-blis==0.7.11  # Updated to newer version with better wheel support
-
-# === Optional: OCR, NLP, etc. ===
+# Optional and OCR tools
 pillow
 pytesseract
 fuzzywuzzy
 pandas
-opencv-python-headless  # Use headless version for server deployments
+opencv-python-headless
 scikit-learn
 matplotlib
 
-# === Additional constraints to avoid build issues ===
 numpy>=1.21.0,<2.0.0
 cython>=0.29.0
 
-# === NLP and Med7 support ===
-spacy==3.7.4
+spacy==3.7.2
 en-core-med7-lg @ https://huggingface.co/kormilitzin/en_core_med7_lg/resolve/main/en_core_med7_lg-any-py3-none-any.whl
