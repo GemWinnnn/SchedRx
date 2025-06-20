@@ -7,14 +7,8 @@ import re
 from PIL import Image
 import spacy
 
-# Load the Med7 model (trained for medical NER like dosage, frequency, etc.)
-import spacy.cli
-
-# Download the model if not already installed (safe even on re-run)
-spacy.cli.download("en_core_med7_lg")
 
 # Load the model
-import en_core_med7_lg
 nlp_med7 = en_core_med7_lg.load()
 
 class PrescriptionParser:
@@ -291,7 +285,7 @@ class PrescriptionParser:
 
 # Entry point
 def main():
-    parser = PrescriptionParser("datasets/combined_drug_names.csv")
+    parser = PrescriptionParser("backend/datasets/combined_drug_names.csv")
     image_path = "/Users/gemwincanete/Documents/prescription_parser/images/pre_2.jpg"
     results = parser.parse_prescription(image_path)
     parser.display_results(results)

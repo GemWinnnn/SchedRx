@@ -1,24 +1,13 @@
-# === FastAPI and Uvicorn ===
-fastapi==0.115.1
-uvicorn==0.34.3
-
-# === Core dependencies ===
-pydantic==2.11.7
-python-multipart==0.0.20
-
-# === Optional: OCR, NLP, etc. ===
-pillow
+Pillow==9.5.0
+matplotlib==3.5.3
+opencv-python==4.6.0.66
+pandas==1.3.5
+fuzzywuzzy==0.18.0
+fastapi==0.95.1
+uvicorn==0.22.0
+python-Levenshtein==0.12.2
+python-multipart==0.0.6
+spacy==3.4.4
+numpy==1.23.5
 pytesseract
-fuzzywuzzy
-pandas
-opencv-python-headless
-scikit-learn
-matplotlib
-
-# === Additional constraints ===
-numpy>=1.21.0,<2.0.0
-cython>=0.29.0
-
-# === NLP ===
-spacy==3.7.2
 en-core-med7-lg @ https://huggingface.co/kormilitzin/en_core_med7_lg/resolve/main/en_core_med7_lg-any-py3-none-any.whl
