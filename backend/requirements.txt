@@ -9,4 +9,4 @@ python-Levenshtein==0.12.2
 python-multipart==0.0.6
 spacy==3.4.4
 numpy==1.23.5
-pytesseract = ==0.3.10
+pytesseract==0.3.10
