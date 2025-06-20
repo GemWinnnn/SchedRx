@@ -22,8 +22,6 @@ matplotlib
 numpy>=1.21.0,<2.0.0
 cython>=0.29.0
 
-
+# === NLP and Med7 support ===
 spacy==3.7.4
-# Required for Med7 model
-https://huggingface.co/kormilitzin/en_core_med7_lg/resolve/main/en_core_med7_lg-any-py3-none-any.whl
-#en-core-med7-trf @ https://huggingface.co/kormilitzin/en_core_med7_trf/resolve/main/en_core_med7_trf-any-py3-none-any.whl
+en-core-med7-lg @ https://huggingface.co/kormilitzin/en_core_med7_lg/resolve/main/en_core_med7_lg-any-py3-none-any.whl
