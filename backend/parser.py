@@ -1,4 +1,3 @@
-import en_core_med7_lg
 import cv2
 import pytesseract
 import pandas as pd
@@ -6,10 +5,22 @@ import numpy as np
 import re
 from PIL import Image
 import spacy
+import subprocess
+import importlib
 
-
-# Load the model
-nlp_med7 = en_core_med7_lg.load()
+# Ensure Med7 model is installed and loaded
+try:
+    # Try loading by name (if already linked)
+    nlp_med7 = spacy.load("en_core_med7_lg")
+except OSError:
+    # Install the Med7 model
+    subprocess.run([
+        "pip", "install",
+        "https://huggingface.co/kormilitzin/en_core_med7_lg/resolve/main/en_core_med7_lg-any-py3-none-any.whl"
+    ])
+    # Try importing it now
+    en_core_med7_lg = importlib.import_module("en_core_med7_lg")
+    nlp_med7 = en_core_med7_lg.load()
 
 class PrescriptionParser:
     def __init__(self, drug_csv_path):

@@ -9,5 +9,4 @@ python-Levenshtein==0.12.2
 python-multipart==0.0.6
 spacy==3.4.4
 numpy==1.23.5
-pytesseract
-en-core-med7-lg @ https://huggingface.co/kormilitzin/en_core_med7_lg/resolve/main/en_core_med7_lg-any-py3-none-any.whl
+pytesseract = ==0.3.10
