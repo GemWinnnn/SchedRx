@@ -296,7 +296,7 @@ class PrescriptionParser:
 
 # Entry point
 def main():
-    parser = PrescriptionParser("backend/datasets/combined_drug_names.csv")
+    parser = PrescriptionParser("/Users/gemwincanete/Prescription_Reader/prescriptionreader/backend/datasets/combined_drug_names.csv")
     image_path = "/Users/gemwincanete/Documents/prescription_parser/images/pre_2.jpg"
     results = parser.parse_prescription(image_path)
     parser.display_results(results)
