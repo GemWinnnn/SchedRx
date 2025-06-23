@@ -206,7 +206,24 @@ class PrescriptionParser:
                 return 2
             unique.sort(key=lambda x: priority(x))
             return unique[:1]
+        elif entity_type == 'instructions':
+            # For instructions, keep all unique items and sort by length (longer instructions first)
+            unique.sort(key=lambda x: len(x), reverse=True)
+            return unique
         return unique
+
+    def merge_frequency_and_duration(self, frequency_items, duration_items):
+        """Merge frequency and duration into a single instructions field"""
+        instructions = []
+        
+        # Add frequency items
+        instructions.extend(frequency_items)
+        
+        # Add duration items
+        instructions.extend(duration_items)
+        
+        # Remove duplicates and prioritize
+        return self.deduplicate_and_prioritize(instructions, 'instructions')
 
     def match_entities_to_medicines(self, text, medicines, med7_entities):
         """Align extracted entities to each detected medicine based on nearby lines"""
@@ -216,19 +233,28 @@ class PrescriptionParser:
             entry = {
                 'medicine': name, 'line': info['line'],
                 'confidence': info['confidence'], 'method': info['method'],
-                'dosage': [], 'strength': [], 'frequency': [],
-                'duration': [], 'form': [], 'route': [], 'quantity': []
+                'dosage': [], 'strength': [], 'instructions': [],
+                'form': [], 'route': [], 'quantity': []
             }
             # Get line where medicine was found
             line_num = next((i for i, l in enumerate(lines) if info['line'].lower() in l.lower()), -1)
             search_lines = lines[line_num:line_num+2] if line_num >= 0 else [info['line']]
             search_text = ' '.join(search_lines).lower()
 
+            # Extract frequency and duration separately first
+            frequency_matched = [e['text'] for e in med7_entities.get('FREQUENCY', []) if e['text'].lower() in search_text]
+            duration_matched = [e['text'] for e in med7_entities.get('DURATION', []) if e['text'].lower() in search_text]
+            
+            # Merge frequency and duration into instructions
+            entry['instructions'] = self.merge_frequency_and_duration(frequency_matched, duration_matched)
+
+            # Handle other entities (excluding FREQUENCY and DURATION as they're now merged)
             for key, ents in med7_entities.items():
-                if key == 'DRUG':
+                if key in ['DRUG', 'FREQUENCY', 'DURATION']:
                     continue
                 matched = [e['text'] for e in ents if e['text'].lower() in search_text]
                 entry[key.lower()] = self.deduplicate_and_prioritize(matched, key.lower())
+            
             items.append(entry)
         return items
 
@@ -279,10 +305,8 @@ class PrescriptionParser:
                 print(f"   💪 Strength: {', '.join(item['strength'])}")
             if item['dosage']:
                 print(f"   📊 Dosage: {', '.join(item['dosage'])}")
-            if item['frequency']:
-                print(f"   ⏰ Frequency: {', '.join(item['frequency'])}")
-            if item['duration']:
-                print(f"   📅 Duration: {', '.join(item['duration'])}")
+            if item['instructions']:
+                print(f"   📋 Instructions: {', '.join(item['instructions'])}")
             if item['form']:
                 print(f"   💊 Form: {', '.join(item['form'])}")
             if item['route']:

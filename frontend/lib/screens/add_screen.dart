@@ -15,8 +15,9 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
   File? _selectedImage;
   bool _isLoading = false;
   String? _error;
-  List<dynamic> _detectedMedicines = [];
+  List<Map<String, dynamic>> _detectedMedicines = [];
   TabController? _tabController;
+  List<TextEditingController> _nameControllers = [];
 
   // Step 1: Pick image
   Future<void> _pickImage() async {
@@ -51,13 +52,40 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
         final result = jsonDecode(respStr);
-        setState(() {
-          _detectedMedicines = result['prescription_items'] ?? [];
-          _tabController = TabController(
-            length: _detectedMedicines.length,
-            vsync: this,
+        final items = (result['prescription_items'] ?? []) as List;
+        _nameControllers.forEach((c) => c.dispose());
+        _nameControllers = [];
+        _detectedMedicines = [];
+        for (var med in items) {
+          _detectedMedicines.add({
+            'medicine': med['medicine'] ?? '',
+            'dosage': (med['dosage'] is List)
+                ? (med['dosage'] as List).join(', ')
+                : (med['dosage'] ?? ''),
+            'strength': (med['strength'] is List)
+                ? (med['strength'] as List).join(', ')
+                : (med['strength'] ?? ''),
+            'instructions': (med['instructions'] is List)
+                ? (med['instructions'] as List).join(', ')
+                : (med['instructions'] ?? ''),
+            'quantity': (med['quantity'] is List)
+                ? (med['quantity'] as List).join(', ')
+                : (med['quantity'] ?? ''),
+            'duration_start': null,
+            'duration_end': null,
+            'form': '',
+            'times': <TimeOfDay>[],
+          });
+          _nameControllers.add(
+            TextEditingController(text: med['medicine'] ?? ''),
           );
-        });
+        }
+        _tabController?.dispose();
+        _tabController = TabController(
+          length: _detectedMedicines.length + 1, // +1 for the + tab
+          vsync: this,
+        );
+        setState(() {});
       } else {
         setState(() {
           _error =
@@ -77,75 +105,339 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
 
   // Step 3: Build detected medicine forms
   List<Widget> _buildMedicineForms() {
-    return _detectedMedicines.map((med) {
-      final nameController = TextEditingController(text: med['medicine'] ?? '');
-      final dosageController = TextEditingController(
-        text: (med['dosage'] as List?)?.join(', ') ?? '',
+    return List.generate(_detectedMedicines.length, (i) {
+      final med = _detectedMedicines[i];
+      final nameController = _nameControllers[i];
+      final dosageController = TextEditingController(text: med['dosage'] ?? '');
+      final strengthController = TextEditingController(
+        text: med['strength'] ?? '',
       );
       final instructionsController = TextEditingController(
-        text: (med['frequency'] as List?)?.join(', ') ?? '',
-      );
-      final durationController = TextEditingController(
-        text: (med['duration'] as List?)?.join(', ') ?? '',
-      );
-      final formController = TextEditingController(
-        text: (med['form'] as List?)?.join(', ') ?? '',
+        text: med['instructions'] ?? '',
       );
       final quantityController = TextEditingController(
-        text: (med['quantity'] as List?)?.join(', ') ?? '',
+        text: med['quantity'] ?? '',
       );
+      final startDate = med['duration_start'] as DateTime?;
+      final endDate = med['duration_end'] as DateTime?;
+      final times = (med['times'] as List<TimeOfDay>? ?? []);
+
       return Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Name
+              const Text('Name'),
+              const SizedBox(height: 4),
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Medicine Name'),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onChanged: (val) {
+                  setState(() {
+                    _detectedMedicines[i]['medicine'] = val;
+                  });
+                },
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: dosageController,
-                decoration: const InputDecoration(labelText: 'Dosage'),
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              // Instructions
+              const Text('Instructions'),
+              const SizedBox(height: 4),
               TextField(
                 controller: instructionsController,
                 decoration: const InputDecoration(
-                  labelText: 'Instructions / Frequency',
+                  border: OutlineInputBorder(),
+                  isDense: true,
                 ),
+                onChanged: (val) {
+                  _detectedMedicines[i]['instructions'] = val;
+                },
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: durationController,
-                decoration: const InputDecoration(labelText: 'Duration'),
+              const SizedBox(height: 16),
+              // Dosage, Strength, Quantity in one row
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Dosage'),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: dosageController,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          onChanged: (val) {
+                            _detectedMedicines[i]['dosage'] = val;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Strength'),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: strengthController,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          onChanged: (val) {
+                            _detectedMedicines[i]['strength'] = val;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Quantity'),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: quantityController,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          onChanged: (val) {
+                            _detectedMedicines[i]['quantity'] = val;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: formController,
-                decoration: const InputDecoration(labelText: 'Form'),
+              const SizedBox(height: 16),
+              // Duration
+              const Text('Duration'),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Start Date'),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: startDate ?? DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _detectedMedicines[i]['duration_start'] =
+                                    picked;
+                              });
+                            }
+                          },
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_today, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  startDate != null
+                                      ? '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}'
+                                      : 'Select',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('End Date'),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: endDate ?? DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _detectedMedicines[i]['duration_end'] = picked;
+                              });
+                            }
+                          },
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_today, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  endDate != null
+                                      ? '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}'
+                                      : 'Select',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: quantityController,
-                decoration: const InputDecoration(labelText: 'Quantity'),
+              const SizedBox(height: 16),
+              // At what time?
+              const Text('At what time?'),
+              const SizedBox(height: 4),
+              Column(
+                children: [
+                  ...List.generate(times.length, (tIdx) {
+                    final t = times[tIdx];
+                    return Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.remove_circle,
+                            color: Colors.red,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              times.removeAt(tIdx);
+                              _detectedMedicines[i]['times'] =
+                                  List<TimeOfDay>.from(times);
+                            });
+                          },
+                        ),
+                        Text('${t.format(context)}'),
+                      ],
+                    );
+                  }),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: Colors.green),
+                        onPressed: () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              times.add(picked);
+                              _detectedMedicines[i]['times'] =
+                                  List<TimeOfDay>.from(times);
+                            });
+                          }
+                        },
+                      ),
+                      const Text('Add a time'),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  // TODO: Save or submit this medicine
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Medicine saved!')),
-                  );
-                },
-                child: const Text('Save Medicine'),
+              // Schedule All Button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1976F6),
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      height: 1.2,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/list');
+                  },
+                  child: const Text('Schedule All'),
+                ),
               ),
             ],
           ),
         ),
       );
-    }).toList();
+    });
+  }
+
+  void _deleteMedicine(int index) {
+    setState(() {
+      _detectedMedicines.removeAt(index);
+      _nameControllers[index].dispose();
+      _nameControllers.removeAt(index);
+      _tabController?.dispose();
+      if (_detectedMedicines.isNotEmpty) {
+        _tabController = TabController(
+          length: _detectedMedicines.length + 1, // +1 for the + tab
+          vsync: this,
+        );
+      } else {
+        _tabController = null;
+      }
+    });
+  }
+
+  void _resetToImagePicker() {
+    setState(() {
+      _detectedMedicines.clear();
+      _nameControllers.forEach((c) => c.dispose());
+      _nameControllers.clear();
+      _tabController?.dispose();
+      _tabController = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    _nameControllers.forEach((c) => c.dispose());
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for tab changes to handle the + tab
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tabController?.addListener(_handleTabChange);
+    });
+  }
+
+  void _handleTabChange() {
+    // No-op: add tab logic now handled by AppBar button only
   }
 
   @override
@@ -156,19 +448,99 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
     if (_detectedMedicines.isNotEmpty && _tabController != null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Detected Medicines'),
-          bottom: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabs: List.generate(
-              _detectedMedicines.length,
-              (i) => Tab(text: 'Medicine ${i + 1}'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _resetToImagePicker,
+          ),
+          title: const Text('Medicines'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                setState(() {
+                  _detectedMedicines.add({
+                    'medicine': '',
+                    'dosage': '',
+                    'strength': '',
+                    'instructions': '',
+                    'quantity': '',
+                    'duration_start': null,
+                    'duration_end': null,
+                    'form': '',
+                    'times': <TimeOfDay>[],
+                  });
+                  _nameControllers.add(TextEditingController());
+                  _tabController?.dispose();
+                  _tabController = TabController(
+                    length: _detectedMedicines.length,
+                    vsync: this,
+                  );
+                  _tabController!.animateTo(_detectedMedicines.length - 1);
+                  _tabController!.addListener(_handleTabChange);
+                });
+              },
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.only(
+                  left: 8,
+                ), // align with back button
+                child: TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  tabs: List.generate(_detectedMedicines.length, (i) {
+                    return Tab(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _nameControllers[i].text.isNotEmpty
+                                  ? _nameControllers[i].text
+                                  : 'Medicine',
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Color(0xFF04080E),
+                                fontFamily: 'Roboto',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                height: 1.5, // 24/16
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () {
+                              _deleteMedicine(i);
+                            },
+                            child: const Icon(
+                              Icons.close,
+                              size: 18,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
         ),
         body: TabBarView(
           controller: _tabController,
-          children: _buildMedicineForms(),
+          children: [
+            ..._buildMedicineForms(),
+            // The + tab content (empty, but triggers add on tab change)
+            const SizedBox.shrink(),
+          ],
         ),
       );
     }
