@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
-import 'api_client.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ListScreen extends StatelessWidget {
   const ListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final apiClient = ApiClient();
     return Scaffold(
       appBar: AppBar(title: const Text('My Prescriptions')),
-      body: FutureBuilder<List<dynamic>>(
-        future: apiClient.fetchMedicines(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('medicines').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -20,7 +19,7 @@ class ListScreen extends StatelessWidget {
           if (snapshot.hasError) {
             return Center(child: Text('Error: \\${snapshot.error}'));
           }
-          final medicines = snapshot.data ?? [];
+          final medicines = snapshot.data?.docs ?? [];
           if (medicines.isEmpty) {
             return Center(
               child: Column(
@@ -48,7 +47,7 @@ class ListScreen extends StatelessWidget {
           return ListView.builder(
             itemCount: medicines.length,
             itemBuilder: (context, index) {
-              final medicine = medicines[index];
+              final medicine = medicines[index].data() as Map<String, dynamic>;
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
@@ -59,7 +58,8 @@ class ListScreen extends StatelessWidget {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(4),
                         ),
-                        child: medicine['imageUrl'].startsWith('http')
+                        child:
+                            medicine['imageUrl'].toString().startsWith('http')
                             ? Image.network(
                                 medicine['imageUrl'],
                                 height: 200,
@@ -78,47 +78,8 @@ class ListScreen extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        height: 200,
-                                        color: Colors.grey[200],
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            value:
-                                                loadingProgress
-                                                        .expectedTotalBytes !=
-                                                    null
-                                                ? loadingProgress
-                                                          .cumulativeBytesLoaded /
-                                                      loadingProgress
-                                                          .expectedTotalBytes!
-                                                : null,
-                                          ),
-                                        ),
-                                      );
-                                    },
                               )
-                            : Image.file(
-                                File(medicine['imageUrl']),
-                                height: 200,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    height: 200,
-                                    color: Colors.grey[200],
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.error_outline,
-                                        size: 48,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                            : Container(),
                       ),
                     Padding(
                       padding: const EdgeInsets.all(16),

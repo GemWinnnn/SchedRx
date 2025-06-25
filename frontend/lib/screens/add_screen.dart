@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -380,7 +381,28 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                       height: 1.2,
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    for (var med in _detectedMedicines) {
+                      // Convert TimeOfDay to string for Firestore
+                      final times = (med['times'] as List<TimeOfDay>)
+                          .map((t) => t.format(context))
+                          .toList();
+                      await FirebaseFirestore.instance
+                          .collection('medicines')
+                          .add({
+                            'name': med['medicine'],
+                            'dosage': med['dosage'],
+                            'strength': med['strength'],
+                            'instructions': med['instructions'],
+                            'quantity': med['quantity'],
+                            'startDate': med['duration_start']
+                                ?.toIso8601String(),
+                            'endDate': med['duration_end']?.toIso8601String(),
+                            'form': med['form'],
+                            'times': times,
+                            'progress': {},
+                          });
+                    }
                     Navigator.pushNamed(context, '/list');
                   },
                   child: const Text('Schedule All'),

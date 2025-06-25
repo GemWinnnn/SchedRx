@@ -1,42 +1,26 @@
 import 'package:flutter/material.dart';
-import 'screens/add_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'screens/add_screen.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/list_screen.dart';
 import 'screens/settings_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  print('Firebase initialized!');
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Prescription Parser',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.light(
-          surface: Colors.white, // Definite white surface
-        ),
-      ),
+      theme: ThemeData(colorScheme: ColorScheme.light(surface: Colors.white)),
       home: const MainNavigation(),
     );
   }
@@ -67,18 +51,8 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _onItemTapped method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: _screens[_selectedIndex],
-      ),
+      body: Center(child: _screens[_selectedIndex]),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
@@ -95,14 +69,9 @@ class _MainNavigationState extends State<MainNavigation> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        selectedItemColor: Color(0xFF117CF5), // Active: blue
-        unselectedItemColor: Color.fromARGB(
-          255,
-          157,
-          157,
-          157,
-        ), // Inactive: blue
-        showUnselectedLabels: true, // Always show text
+        selectedItemColor: Color(0xFF117CF5),
+        unselectedItemColor: Color.fromARGB(255, 157, 157, 157),
+        showUnselectedLabels: true,
       ),
     );
   }
