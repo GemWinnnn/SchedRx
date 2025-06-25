@@ -4,8 +4,11 @@ import 'add_screen.dart';
 import 'calendar_screen.dart';
 import 'list_screen.dart';
 import 'settings_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
