@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "647999985726",
+    "project_id": "prescription-458715",
+    "storage_bucket": "prescription-458715.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:647999985726:android:4d0db53a21e9e0f513596f",
+        "android_client_info": {
+          "package_name": "com.example.prescriptionreader"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "647999985726-1kjq093oq96g03qa125oackko8j00lqm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAd2IIcAWqvRkH7XO3U91KlGV1IQsj7BJk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "647999985726-1kjq093oq96g03qa125oackko8j00lqm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "647999985726-0hqmsg0n3i6dru4gk6ddsuhso9j2kd54.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.prescriptionMedical"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
