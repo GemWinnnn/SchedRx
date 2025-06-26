@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'details_screen.dart';
 
 class ListScreen extends StatelessWidget {
   const ListScreen({super.key});
@@ -17,8 +17,9 @@ class ListScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: \\${snapshot.error}'));
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
+
           final medicines = snapshot.data?.docs ?? [];
           if (medicines.isEmpty) {
             return Center(
@@ -44,122 +45,81 @@ class ListScreen extends StatelessWidget {
               ),
             );
           }
+
           return ListView.builder(
             itemCount: medicines.length,
             itemBuilder: (context, index) {
               final medicine = medicines[index].data() as Map<String, dynamic>;
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (medicine['imageUrl'] != null)
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(4),
+              final docId = medicines[index].id;
+              final name = medicine['name'] ?? 'Medicine name here';
+              final start = medicine['startDate'];
+              final end = medicine['endDate'];
+
+              String duration = 'Duration here';
+              try {
+                final DateTime startDate = (start as Timestamp).toDate();
+                final DateTime endDate = (end as Timestamp).toDate();
+                duration =
+                    '${DateFormat('MMM d, yyyy').format(startDate)} - ${DateFormat('MMM d, yyyy').format(endDate)}';
+              } catch (e) {
+                duration = 'Duration here';
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  elevation: 1,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              DetailsScreen(docId: docId, medicine: medicine),
                         ),
-                        child:
-                            medicine['imageUrl'].toString().startsWith('http')
-                            ? Image.network(
-                                medicine['imageUrl'],
-                                height: 200,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    height: 200,
-                                    color: Colors.grey[200],
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.error_outline,
-                                        size: 48,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : Container(),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
                       ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  medicine['name'] ?? '',
-                                  style: Theme.of(context).textTheme.titleLarge,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () {
-                                  // TODO: Call backend API to delete medicine
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            medicine['dosage'] ?? '',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${medicine['startDate'] ?? ''} - ${medicine['endDate'] ?? ''}',
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.timer,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${medicine['daysLeft'] ?? ''} days left',
-                                style: TextStyle(
-                                  color: (medicine['daysLeft'] ?? 0) < 7
-                                      ? Colors.red
-                                      : Colors.green,
+                                const SizedBox(height: 4),
+                                Text(
+                                  duration,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black54,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          LinearProgressIndicator(
-                            value: medicine['intakeProgress'] ?? 0.0,
-                            backgroundColor: Colors.grey[200],
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              Colors.blue,
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${((medicine['intakeProgress'] ?? 0.0) * 100).toStringAsFixed(0)}% taken',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
+                          const Icon(Icons.chevron_right, color: Colors.blue),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               );
             },

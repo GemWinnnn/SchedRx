@@ -64,8 +64,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '647999985726',
     projectId: 'prescription-458715',
     storageBucket: 'prescription-458715.firebasestorage.app',
-    androidClientId: '647999985726-7hsvs94nut5mnr70j68dfst7d3ghckf3.apps.googleusercontent.com',
-    iosClientId: '647999985726-6a0hkr6j1frc7q6ihnra24ukbob77ft2.apps.googleusercontent.com',
+    androidClientId:
+        '647999985726-7hsvs94nut5mnr70j68dfst7d3ghckf3.apps.googleusercontent.com',
+    iosClientId:
+        '647999985726-6a0hkr6j1frc7q6ihnra24ukbob77ft2.apps.googleusercontent.com',
     iosBundleId: 'com.example.prescriptionreader',
   );
 
@@ -75,8 +77,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '647999985726',
     projectId: 'prescription-458715',
     storageBucket: 'prescription-458715.firebasestorage.app',
-    androidClientId: '647999985726-7hsvs94nut5mnr70j68dfst7d3ghckf3.apps.googleusercontent.com',
-    iosClientId: '647999985726-6a0hkr6j1frc7q6ihnra24ukbob77ft2.apps.googleusercontent.com',
+    androidClientId:
+        '647999985726-7hsvs94nut5mnr70j68dfst7d3ghckf3.apps.googleusercontent.com',
+    iosClientId:
+        '647999985726-6a0hkr6j1frc7q6ihnra24ukbob77ft2.apps.googleusercontent.com',
     iosBundleId: 'com.example.prescriptionreader',
   );
 

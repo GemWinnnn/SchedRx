@@ -19,6 +19,16 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
   List<Map<String, dynamic>> _detectedMedicines = [];
   TabController? _tabController;
   List<TextEditingController> _nameControllers = [];
+  Map<int, Map<String, String>> _fieldErrors = {};
+  bool _submitted = false;
+
+  DateTime? _toDate(dynamic ts) {
+    if (ts == null) return null;
+    if (ts is DateTime) return ts;
+    if (ts is String) return DateTime.tryParse(ts);
+    if (ts is Timestamp) return ts.toDate();
+    return null;
+  }
 
   // Step 1: Pick image
   Future<void> _pickImage() async {
@@ -122,6 +132,7 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
       final startDate = med['duration_start'] as DateTime?;
       final endDate = med['duration_end'] as DateTime?;
       final times = (med['times'] as List<TimeOfDay>? ?? []);
+      final errors = _fieldErrors[i] ?? {};
 
       return Padding(
         padding: const EdgeInsets.all(16.0),
@@ -134,13 +145,17 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
               const SizedBox(height: 4),
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
                   isDense: true,
+                  errorText: _submitted && (errors['name']?.isNotEmpty ?? false)
+                      ? errors['name']
+                      : null,
                 ),
                 onChanged: (val) {
                   setState(() {
                     _detectedMedicines[i]['medicine'] = val;
+                    if (_submitted) _fieldErrors[i]?.remove('name');
                   });
                 },
               ),
@@ -170,12 +185,18 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                         const SizedBox(height: 4),
                         TextField(
                           controller: dosageController,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
                             isDense: true,
+                            errorText:
+                                _submitted &&
+                                    (errors['dosage']?.isNotEmpty ?? false)
+                                ? errors['dosage']
+                                : null,
                           ),
                           onChanged: (val) {
                             _detectedMedicines[i]['dosage'] = val;
+                            if (_submitted) _fieldErrors[i]?.remove('dosage');
                           },
                         ),
                       ],
@@ -247,13 +268,20 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                               setState(() {
                                 _detectedMedicines[i]['duration_start'] =
                                     picked;
+                                if (_submitted)
+                                  _fieldErrors[i]?.remove('startDate');
                               });
                             }
                           },
                           child: InputDecorator(
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
                               isDense: true,
+                              errorText:
+                                  _submitted &&
+                                      (errors['startDate']?.isNotEmpty ?? false)
+                                  ? errors['startDate']
+                                  : null,
                             ),
                             child: Row(
                               children: [
@@ -289,13 +317,20 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                             if (picked != null) {
                               setState(() {
                                 _detectedMedicines[i]['duration_end'] = picked;
+                                if (_submitted)
+                                  _fieldErrors[i]?.remove('endDate');
                               });
                             }
                           },
                           child: InputDecorator(
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
                               isDense: true,
+                              errorText:
+                                  _submitted &&
+                                      (errors['endDate']?.isNotEmpty ?? false)
+                                  ? errors['endDate']
+                                  : null,
                             ),
                             child: Row(
                               children: [
@@ -335,6 +370,8 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                               times.removeAt(tIdx);
                               _detectedMedicines[i]['times'] =
                                   List<TimeOfDay>.from(times);
+                              if (_submitted && times.isNotEmpty)
+                                _fieldErrors[i]?.remove('times');
                             });
                           },
                         ),
@@ -356,6 +393,8 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                               times.add(picked);
                               _detectedMedicines[i]['times'] =
                                   List<TimeOfDay>.from(times);
+                              if (_submitted && times.isNotEmpty)
+                                _fieldErrors[i]?.remove('times');
                             });
                           }
                         },
@@ -363,6 +402,14 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                       const Text('Add a time'),
                     ],
                   ),
+                  if (_submitted && (errors['times']?.isNotEmpty ?? false))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 8),
+                      child: Text(
+                        errors['times']!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -382,28 +429,91 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                     ),
                   ),
                   onPressed: () async {
-                    for (var med in _detectedMedicines) {
-                      // Convert TimeOfDay to string for Firestore
-                      final times = (med['times'] as List<TimeOfDay>)
-                          .map((t) => t.format(context))
-                          .toList();
-                      await FirebaseFirestore.instance
-                          .collection('medicines')
-                          .add({
-                            'name': med['medicine'],
-                            'dosage': med['dosage'],
-                            'strength': med['strength'],
-                            'instructions': med['instructions'],
-                            'quantity': med['quantity'],
-                            'startDate': med['duration_start']
-                                ?.toIso8601String(),
-                            'endDate': med['duration_end']?.toIso8601String(),
-                            'form': med['form'],
-                            'times': times,
-                            'progress': {},
-                          });
+                    _submitted = true;
+                    _fieldErrors.clear();
+                    bool hasError = false;
+                    for (int i = 0; i < _detectedMedicines.length; i++) {
+                      final med = _detectedMedicines[i];
+                      final errors = <String, String>{};
+                      if ((med['medicine'] as String?)?.trim().isEmpty ??
+                          true) {
+                        errors['name'] = 'Name is required.';
+                        hasError = true;
+                      }
+                      if ((med['dosage'] as String?)?.trim().isEmpty ?? true) {
+                        errors['dosage'] = 'Dosage is required.';
+                        hasError = true;
+                      }
+                      if (med['duration_start'] == null) {
+                        errors['startDate'] = 'Start date is required.';
+                        hasError = true;
+                      }
+                      if (med['duration_end'] == null) {
+                        errors['endDate'] = 'End date is required.';
+                        hasError = true;
+                      }
+                      if ((med['times'] as List).isEmpty) {
+                        errors['times'] = 'At least one time is required.';
+                        hasError = true;
+                      }
+                      if (errors.isNotEmpty) {
+                        _fieldErrors[i] = errors;
+                      }
                     }
-                    Navigator.pushNamed(context, '/list');
+                    setState(() {});
+                    if (hasError) return;
+                    try {
+                      for (var med in _detectedMedicines) {
+                        // Convert TimeOfDay to string for Firestore
+                        final times = (med['times'] as List<TimeOfDay>)
+                            .map((t) => t.format(context))
+                            .toList();
+                        await FirebaseFirestore.instance
+                            .collection('medicines')
+                            .add({
+                              'name': med['medicine'],
+                              'dosage':
+                                  double.tryParse(med['dosage'].toString()) ??
+                                  0,
+                              'strength': med['strength'],
+                              'instructions': med['instructions'],
+                              'quantity':
+                                  int.tryParse(med['quantity'].toString()) ?? 0,
+                              'startDate': med['duration_start'] != null
+                                  ? Timestamp.fromDate(med['duration_start'])
+                                  : null,
+                              'endDate': med['duration_end'] != null
+                                  ? Timestamp.fromDate(med['duration_end'])
+                                  : null,
+                              'form': med['form'],
+                              'times': times,
+                              'progress': {},
+                            });
+                      }
+                      // Show confirmation
+                      if (mounted) {
+                        await showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Success'),
+                            content: const Text(
+                              'Medicines have been scheduled.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                        Navigator.pushNamed(context, '/list');
+                      }
+                    } catch (e) {
+                      setState(() {
+                        _error = 'Failed to schedule medicines: $e';
+                      });
+                    }
                   },
                   child: const Text('Schedule All'),
                 ),
