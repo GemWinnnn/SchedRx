@@ -40,17 +40,34 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   Future<void> _onSave() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() {
       _saving = true;
     });
+
+    // Prepare data for saving - convert string numbers back to proper types
+    Map<String, dynamic> dataToSave = Map<String, dynamic>.from(_edited);
+
+    // Convert quantity to int if it's a string
+    if (dataToSave['quantity'] is String) {
+      dataToSave['quantity'] = int.tryParse(dataToSave['quantity']) ?? 0;
+    }
+
+    // Convert dosage to double if it's a string
+    if (dataToSave['dosage'] is String) {
+      dataToSave['dosage'] = double.tryParse(dataToSave['dosage']) ?? 0.0;
+    }
+
     await FirebaseFirestore.instance
         .collection('medicines')
         .doc(widget.docId)
-        .update(_edited);
+        .update(dataToSave);
+
     setState(() {
       _editing = false;
       _saving = false;
     });
+
     if (mounted) {
       ScaffoldMessenger.of(
         context,
@@ -95,9 +112,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
         ? _edited['dosage']
         : double.tryParse(_edited['dosage']?.toString() ?? '') ?? 0.0;
 
-    final List<Timestamp> rawTimes = List<Timestamp>.from(
-      _edited['times'] ?? [],
-    );
+    // Handle times field which might contain strings or Timestamps
+    List<Timestamp> rawTimes = [];
+    if (_edited['times'] != null) {
+      final timesData = _edited['times'] as List;
+      rawTimes = _convertToTimestamps(timesData);
+    }
+
     final times = rawTimes
         .map((t) => TimeOfDay.fromDateTime(t.toDate()).format(context))
         .toList();
@@ -133,7 +154,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField('Quantity', 'quantity', quantity),
+                  child: _buildNumberField('Quantity', 'quantity', quantity),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -152,7 +173,14 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             Row(
               children: [
-                Expanded(child: _buildTextField('Dosage', 'dosage', dosage)),
+                Expanded(
+                  child: _buildNumberField(
+                    'Dosage',
+                    'dosage',
+                    dosage,
+                    isDouble: true,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -164,9 +192,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   IconButton(
                     icon: const Icon(Icons.remove_circle, color: Colors.red),
                     onPressed: () {
-                      final updated = List<Timestamp>.from(
-                        _edited['times'] ?? [],
-                      );
+                      final updated = _convertToTimestamps(_edited['times']);
                       if (i < updated.length) {
                         updated.removeAt(i);
                         _onFieldChanged('times', updated);
@@ -195,9 +221,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         picked.hour,
                         picked.minute,
                       );
-                      final updated = List<Timestamp>.from(
-                        _edited['times'] ?? [],
-                      );
+                      final updated = _convertToTimestamps(_edited['times']);
                       updated.add(Timestamp.fromDate(selected));
                       _onFieldChanged('times', updated);
                     }
@@ -271,7 +295,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
-        initialValue: _formatValue(value),
+        initialValue: value?.toString() ?? '',
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -280,6 +304,50 @@ class _DetailsScreenState extends State<DetailsScreen> {
         onChanged: (val) => _onFieldChanged(key, val),
         validator: (val) =>
             (val == null || val.trim().isEmpty) ? '$label is required' : null,
+      ),
+    );
+  }
+
+  Widget _buildNumberField(
+    String label,
+    String key,
+    dynamic value, {
+    bool isDouble = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        initialValue: value?.toString() ?? '',
+        keyboardType: TextInputType.numberWithOptions(decimal: isDouble),
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          isDense: true,
+        ),
+        onChanged: (val) {
+          if (isDouble) {
+            final doubleVal = double.tryParse(val) ?? 0.0;
+            _onFieldChanged(key, doubleVal);
+          } else {
+            final intVal = int.tryParse(val) ?? 0;
+            _onFieldChanged(key, intVal);
+          }
+        },
+        validator: (val) {
+          if (val == null || val.trim().isEmpty) {
+            return '$label is required';
+          }
+          if (isDouble) {
+            if (double.tryParse(val) == null) {
+              return '$label must be a valid number';
+            }
+          } else {
+            if (int.tryParse(val) == null) {
+              return '$label must be a valid integer';
+            }
+          }
+          return null;
+        },
       ),
     );
   }
@@ -309,9 +377,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             const Icon(Icons.calendar_today, size: 18),
             const SizedBox(width: 8),
             Text(
-              date != null
-                  ? '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'
-                  : 'Select',
+              date != null ? DateFormat('yyyy-MM-dd').format(date) : 'Select',
             ),
           ],
         ),
@@ -373,11 +439,60 @@ class _DetailsScreenState extends State<DetailsScreen> {
     return null;
   }
 
-  String _formatValue(dynamic value) {
-    if (value == null) return '';
-    if (value is Timestamp) {
-      return DateFormat('yyyy-MM-dd').format(value.toDate());
-    }
-    return value.toString();
+  // Helper function to safely convert times data to List<Timestamp>
+  List<Timestamp> _convertToTimestamps(List? timesData) {
+    if (timesData == null) return [];
+
+    return timesData.map((item) {
+      if (item is Timestamp) {
+        return item;
+      } else if (item is String) {
+        // Handle TimeOfDay format strings (like "2:30 PM")
+        try {
+          // First try to parse as ISO format
+          final dateTime = DateTime.parse(item);
+          return Timestamp.fromDate(dateTime);
+        } catch (e) {
+          // If that fails, try to parse as TimeOfDay format
+          try {
+            // Extract time from string like "2:30 PM"
+            final timeStr = item.trim();
+            final isPM = timeStr.toLowerCase().contains('pm');
+            final timeOnly = timeStr.replaceAll(
+              RegExp(r'\s*(am|pm)\s*', caseSensitive: false),
+              '',
+            );
+            final parts = timeOnly.split(':');
+
+            if (parts.length == 2) {
+              int hour = int.parse(parts[0]);
+              int minute = int.parse(parts[1]);
+
+              // Convert to 24-hour format
+              if (isPM && hour != 12) hour += 12;
+              if (!isPM && hour == 12) hour = 0;
+
+              // Create DateTime for today with the specified time
+              final now = DateTime.now();
+              final dateTime = DateTime(
+                now.year,
+                now.month,
+                now.day,
+                hour,
+                minute,
+              );
+              return Timestamp.fromDate(dateTime);
+            }
+          } catch (e2) {
+            // If all parsing fails, return current time as fallback
+            return Timestamp.now();
+          }
+          return Timestamp.now();
+        }
+      } else {
+        // Fallback for any other type
+        return Timestamp.now();
+      }
+    }).toList();
   }
 }

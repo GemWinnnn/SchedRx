@@ -90,43 +90,71 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
-  Color _getDateBackgroundColor(
+  // Helper method to determine completion status for a date
+  Map<String, dynamic> _getCompletionStatus(
     DateTime date,
-    bool isSelected,
     List<dynamic> medicines,
   ) {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final dateToCheck = DateTime(date.year, date.month, date.day);
     final dateKey = DateFormat('yyyy-MM-dd').format(dateToCheck);
+    final isCurrentDay = dateToCheck.isAtSameMomentAs(startOfDay);
 
     if (dateToCheck.isAfter(startOfDay)) {
-      return Colors.grey[200]!;
-    } else if (dateToCheck.isAtSameMomentAs(startOfDay)) {
-      return Colors.transparent;
-    } else {
-      final medicinesForDate = medicines.where((med) {
-        final medStart = (med['startDate'] as Timestamp).toDate();
-        final medEnd = (med['endDate'] as Timestamp).toDate();
-        final isInRange =
-            dateToCheck.isAfter(medStart.subtract(Duration(days: 1))) &&
-            dateToCheck.isBefore(medEnd.add(Duration(days: 1)));
-        return isInRange;
-      }).toList();
-
-      if (medicinesForDate.isEmpty) {
-        return Colors.blue.withOpacity(0.1);
-      }
-
-      final allMedicinesTaken = medicinesForDate.every((med) {
-        final takenDates = List<String>.from(med['takenDates'] ?? []);
-        return takenDates.contains(dateKey);
-      });
-
-      return allMedicinesTaken
-          ? Colors.blue.withOpacity(0.8)
-          : Colors.blue.withOpacity(0.1);
+      return {
+        'isFuture': true,
+        'isCurrentDay': false,
+        'hasMedicines': false,
+        'totalMedicines': 0,
+        'takenMedicines': 0,
+        'completionRatio': 0.0,
+        'hasNoMedicines': false,
+        'hasMedicinesButNoneTaken': false,
+      };
     }
+
+    final medicinesForDate = medicines.where((med) {
+      final medStart = (med['startDate'] as Timestamp).toDate();
+      final medEnd = (med['endDate'] as Timestamp).toDate();
+      final isInRange =
+          dateToCheck.isAfter(medStart.subtract(Duration(days: 1))) &&
+          dateToCheck.isBefore(medEnd.add(Duration(days: 1)));
+      return isInRange;
+    }).toList();
+
+    if (medicinesForDate.isEmpty) {
+      return {
+        'isFuture': false,
+        'isCurrentDay': isCurrentDay,
+        'hasMedicines': false,
+        'totalMedicines': 0,
+        'takenMedicines': 0,
+        'completionRatio': 0.0,
+        'hasNoMedicines': true,
+        'hasMedicinesButNoneTaken': false,
+      };
+    }
+
+    final takenMedicines = medicinesForDate.where((med) {
+      final takenDates = List<String>.from(med['takenDates'] ?? []);
+      return takenDates.contains(dateKey);
+    }).length;
+
+    final completionRatio = takenMedicines / medicinesForDate.length;
+    final hasMedicinesButNoneTaken =
+        !isCurrentDay && takenMedicines == 0 && medicinesForDate.isNotEmpty;
+
+    return {
+      'isFuture': false,
+      'isCurrentDay': isCurrentDay,
+      'hasMedicines': true,
+      'totalMedicines': medicinesForDate.length,
+      'takenMedicines': takenMedicines,
+      'completionRatio': completionRatio,
+      'hasNoMedicines': false,
+      'hasMedicinesButNoneTaken': hasMedicinesButNoneTaken,
+    };
   }
 
   BoxBorder? _getDateBorder(DateTime date) {
@@ -150,6 +178,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final isFutureDate = date.isAfter(startOfDay);
+    final completionStatus = _getCompletionStatus(date, medicines);
+
+    // Determine background color
+    Color backgroundColor = Colors.transparent; // Default for current day
+    if (completionStatus['isFuture']) {
+      backgroundColor = Colors.grey[200]!;
+    } else if (completionStatus['hasNoMedicines']) {
+      backgroundColor = Color(
+        0xFFDFEDFF,
+      ); // Light blue for days with no medicines assigned
+    } else if (completionStatus['hasMedicinesButNoneTaken']) {
+      backgroundColor = Color(
+        0xFFFFEB4F,
+      ); // Yellow for past days with medicines but none taken
+    }
 
     return GestureDetector(
       onTap: () => _onDateSelected(date),
@@ -157,19 +200,39 @@ class _CalendarScreenState extends State<CalendarScreen> {
         width: 80,
         margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: _getDateBackgroundColor(date, isSelected, medicines),
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(5),
           border: _getDateBorder(date),
         ),
-        child: Center(
-          child: Text(
-            dayOfMonth,
-            style: TextStyle(
-              color: isFutureDate ? Colors.grey[600] : Colors.black87,
-              fontSize: 16,
-              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+        child: Stack(
+          children: [
+            // Background fill for completion status (only for days with medicines and some taken)
+            if (!completionStatus['isFuture'] &&
+                completionStatus['hasMedicines'] &&
+                completionStatus['takenMedicines'] > 0)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(5),
+                  child: CustomPaint(
+                    painter: _CompletionFillPainter(
+                      completionRatio: completionStatus['completionRatio'],
+                      color: Color(0xFF0077FE),
+                    ),
+                  ),
+                ),
+              ),
+            // Date text
+            Center(
+              child: Text(
+                dayOfMonth,
+                style: TextStyle(
+                  color: isFutureDate ? Colors.grey[600] : Colors.black87,
+                  fontSize: 16,
+                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -225,15 +288,28 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Future<void> _toggleMedicineTaken(dynamic medicine, String dateKey) async {
     final takenDates = List<String>.from(medicine['takenDates'] ?? []);
     final docId = medicine['id'];
+    final isCurrentlyTaken = takenDates.contains(dateKey);
+    final action = isCurrentlyTaken ? 'untaken' : 'taken';
 
-    if (takenDates.contains(dateKey)) {
+    if (isCurrentlyTaken) {
       takenDates.remove(dateKey);
     } else {
       takenDates.add(dateKey);
     }
 
+    // Update the medicine document
     await FirebaseFirestore.instance.collection('medicines').doc(docId).update({
       'takenDates': takenDates,
+    });
+
+    // Log the action for analytics/tracking
+    await FirebaseFirestore.instance.collection('medicine_logs').add({
+      'medicineId': docId,
+      'medicineName': medicine['name'],
+      'action': action,
+      'date': dateKey,
+      'timestamp': FieldValue.serverTimestamp(),
+      'userId': 'current_user', // You can replace this with actual user ID
     });
 
     await _fetchMedicines();
@@ -464,4 +540,36 @@ class _DownTrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _CompletionFillPainter extends CustomPainter {
+  final double completionRatio;
+  final Color color;
+
+  const _CompletionFillPainter({
+    required this.completionRatio,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Create a rectangle that fills from bottom up based on completion ratio
+    final fillHeight = size.height * completionRatio;
+    final rect = Rect.fromLTWH(
+      0,
+      size.height - fillHeight,
+      size.width,
+      fillHeight,
+    );
+    canvas.drawRect(rect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) =>
+      completionRatio !=
+      (oldDelegate as _CompletionFillPainter).completionRatio;
 }
