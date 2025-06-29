@@ -472,9 +472,7 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                             .collection('medicines')
                             .add({
                               'name': med['medicine'],
-                              'dosage':
-                                  double.tryParse(med['dosage'].toString()) ??
-                                  0,
+                              'dosage': med['dosage'],
                               'strength': med['strength'],
                               'instructions': med['instructions'],
                               'quantity':
@@ -694,7 +692,7 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
           ),
         ),
       ),
-      backgroundColor: const Color(0xFFFDFDFD),
+      backgroundColor: const Color(0xFFFCFCFC),
       body: Center(
         child: SingleChildScrollView(
           child: Padding(

@@ -53,11 +53,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
       dataToSave['quantity'] = int.tryParse(dataToSave['quantity']) ?? 0;
     }
 
-    // Convert dosage to double if it's a string
-    if (dataToSave['dosage'] is String) {
-      dataToSave['dosage'] = double.tryParse(dataToSave['dosage']) ?? 0.0;
-    }
-
     await FirebaseFirestore.instance
         .collection('medicines')
         .doc(widget.docId)
@@ -108,9 +103,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         ? _edited['quantity']
         : int.tryParse(_edited['quantity']?.toString() ?? '') ?? 0;
 
-    final dosage = _edited['dosage'] is double
-        ? _edited['dosage']
-        : double.tryParse(_edited['dosage']?.toString() ?? '') ?? 0.0;
+    final dosage = _edited['dosage']?.toString() ?? '';
 
     // Handle times field which might contain strings or Timestamps
     List<Timestamp> rawTimes = [];
@@ -123,17 +116,35 @@ class _DetailsScreenState extends State<DetailsScreen> {
         .map((t) => TimeOfDay.fromDateTime(t.toDate()).format(context))
         .toList();
 
+    // Calculate taken count from takenDates
+    final takenDates = List<String>.from(_edited['takenDates'] ?? []);
+    final takenCount = takenDates.length;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_edited['name'] ?? 'Medicine'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: _onDelete,
-            tooltip: 'Delete',
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          title: Text(_edited['name'] ?? 'Medicine'),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: _onDelete,
+              tooltip: 'Delete',
+            ),
+          ],
+          flexibleSpace: Container(
+            alignment: Alignment.bottomCenter,
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+              ),
+            ),
           ),
-        ],
+        ),
       ),
+      backgroundColor: const Color(0xFFFCFCFC),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -144,18 +155,26 @@ class _DetailsScreenState extends State<DetailsScreen> {
               children: [
                 _statBox(
                   'You have been\ntaking this medicine',
-                  '${times.length} times',
+                  '$takenCount times',
                 ),
                 _statBox('Days left:', _daysLeft(_edited)),
               ],
             ),
             const SizedBox(height: 24),
+            // Name
             _buildTextField('Name', 'name', _edited['name']),
+            const SizedBox(height: 16),
+            // Instructions
+            _buildTextField(
+              'Instructions',
+              'instructions',
+              _edited['instructions'],
+            ),
+            const SizedBox(height: 16),
+            // One row: Dosage, Strength, Quantity
             Row(
               children: [
-                Expanded(
-                  child: _buildNumberField('Quantity', 'quantity', quantity),
-                ),
+                Expanded(child: _buildTextField('Dosage', 'dosage', dosage)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildTextField(
@@ -164,27 +183,47 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     _edited['strength'],
                   ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildNumberField('Quantity', 'quantity', quantity),
+                ),
               ],
             ),
-            _buildTextField(
-              'Instructions',
-              'instructions',
-              _edited['instructions'],
+            const SizedBox(height: 16),
+            // Duration
+            const Text(
+              'Duration',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
+            const SizedBox(height: 8),
+            // Start date and End date
             Row(
               children: [
                 Expanded(
-                  child: _buildNumberField(
-                    'Dosage',
-                    'dosage',
-                    dosage,
-                    isDouble: true,
+                  child: _buildDateField(
+                    'Start Date',
+                    'startDate',
+                    _edited['startDate'],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildDateField(
+                    'End Date',
+                    'endDate',
+                    _edited['endDate'],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            const Text('At what time?'),
+            // At what time?
+            const Text(
+              'At what time?',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            // Time here
             ...List.generate(
               times.length,
               (i) => Row(
@@ -228,26 +267,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   },
                 ),
                 const Text('Add a time'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDateField(
-                    'Start Date',
-                    'startDate',
-                    _edited['startDate'],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildDateField(
-                    'End Date',
-                    'endDate',
-                    _edited['endDate'],
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 32),
@@ -424,7 +443,18 @@ class _DetailsScreenState extends State<DetailsScreen> {
       final end = med['endDate'];
       final endDate = _toDate(end);
       if (endDate == null) return '-';
-      final diff = endDate.difference(DateTime.now()).inDays;
+
+      final now = DateTime.now();
+      final startOfToday = DateTime(now.year, now.month, now.day);
+      final endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+      // If end date is today or in the past, return 0
+      if (endDate.isBefore(endOfToday)) {
+        return '0';
+      }
+
+      // Calculate days left (including today)
+      final diff = endDate.difference(startOfToday).inDays;
       return diff >= 0 ? diff.toString() : '0';
     } catch (_) {
       return '-';

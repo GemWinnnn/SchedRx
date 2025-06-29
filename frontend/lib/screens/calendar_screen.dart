@@ -212,11 +212,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 completionStatus['takenMedicines'] > 0)
               Positioned.fill(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(3),
                   child: CustomPaint(
                     painter: _CompletionFillPainter(
                       completionRatio: completionStatus['completionRatio'],
-                      color: Color(0xFF0077FE),
+                      color: const Color(0xFF0077FE),
                     ),
                   ),
                 ),
@@ -342,7 +342,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
         backgroundColor: Color(0xFFFDFDFD),
         elevation: 0,
       ),
-      backgroundColor: Color(0xFFFDFDFD),
       body: Column(
         children: [
           Container(
@@ -438,16 +437,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(
-                            color: Color(0xFFD9D9D9),
-                            width: 0.5,
-                          ),
+                          side: BorderSide(color: Color(0xFFF8F8F8), width: 1),
                         ),
                         color: Colors.white,
-                        shadowColor: Colors.black.withOpacity(0.09),
+                        shadowColor: Colors.transparent,
                         child: Container(
                           decoration: BoxDecoration(
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Color(0xFFF8F8F8),
+                              width: 1,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.09),
@@ -467,48 +468,89 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     (medicine['startDate'] as Timestamp)
                                         .toDate(),
                                   ),
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                                 SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 60,
-                                      height: 60,
-                                      color: Colors.grey[300],
-                                    ),
-                                    SizedBox(width: 16),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          medicine['name'],
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(medicine['dosage'].toString()),
-                                      ],
-                                    ),
-                                  ],
+                                Text(
+                                  medicine['name'],
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                                SizedBox(height: 16),
+                                Text(
+                                  'Intake ${medicine['dosage']}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                SizedBox(height: 18),
                                 isTaken
-                                    ? OutlinedButton(
-                                        onPressed: () => _toggleMedicineTaken(
-                                          medicine,
-                                          dateKey,
-                                        ),
-                                        child: Text("Untake"),
+                                    ? Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () =>
+                                                _toggleMedicineTaken(
+                                                  medicine,
+                                                  dateKey,
+                                                ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.white,
+                                              foregroundColor: Color(
+                                                0xFF117CF5,
+                                              ),
+                                              elevation: 0,
+                                              side: const BorderSide(
+                                                color: Color(0xFF117CF5),
+                                                width: 2,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 14,
+                                                  ),
+                                              textStyle: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            child: const Text("Untake"),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Taken at ' +
+                                                DateFormat(
+                                                  'HH:mm',
+                                                ).format(DateTime.now()),
+                                            style: const TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 14,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
                                       )
-                                    : ElevatedButton(
-                                        onPressed: () => _toggleMedicineTaken(
-                                          medicine,
-                                          dateKey,
+                                    : SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          onPressed: () => _toggleMedicineTaken(
+                                            medicine,
+                                            dateKey,
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Color(0xFF117CF5),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                            textStyle: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          child: const Text("Taken"),
                                         ),
-                                        child: Text("Taken"),
                                       ),
                               ],
                             ),

@@ -9,7 +9,23 @@ class ListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Prescriptions')),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          title: const Text('My Prescriptions'),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          flexibleSpace: Container(
+            alignment: Alignment.bottomCenter,
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+              ),
+            ),
+          ),
+        ),
+      ),
+      backgroundColor: const Color(0xFFFCFCFC),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('medicines').snapshots(),
         builder: (context, snapshot) {
