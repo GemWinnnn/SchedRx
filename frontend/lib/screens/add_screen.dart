@@ -141,37 +141,108 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Name
-              const Text('Name'),
-              const SizedBox(height: 4),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  isDense: true,
-                  errorText: _submitted && (errors['name']?.isNotEmpty ?? false)
-                      ? errors['name']
-                      : null,
-                ),
-                onChanged: (val) {
-                  setState(() {
-                    _detectedMedicines[i]['medicine'] = val;
-                    if (_submitted) _fieldErrors[i]?.remove('name');
-                  });
-                },
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Color(0xFFF9F9F9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(
+                          color: Color(0xFFD3D3D3),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(
+                          color: Color(0xFFD3D3D3),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                      ),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
+                      errorText:
+                          _submitted && (errors['name']?.isNotEmpty ?? false)
+                          ? errors['name']
+                          : null,
+                    ),
+                    onChanged: (val) {
+                      setState(() {
+                        _detectedMedicines[i]['medicine'] = val;
+                        if (_submitted) _fieldErrors[i]?.remove('name');
+                      });
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               // Instructions
-              const Text('Instructions'),
-              const SizedBox(height: 4),
-              TextField(
-                controller: instructionsController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-                onChanged: (val) {
-                  _detectedMedicines[i]['instructions'] = val;
-                },
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Instructions',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: instructionsController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Color(0xFFF9F9F9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(
+                          color: Color(0xFFD3D3D3),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(
+                          color: Color(0xFFD3D3D3),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                      ),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
+                    ),
+                    onChanged: (val) {
+                      _detectedMedicines[i]['instructions'] = val;
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               // Dosage, Strength, Quantity in one row
@@ -181,18 +252,46 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Dosage'),
-                        const SizedBox(height: 4),
+                        const Text(
+                          'Dosage',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         TextField(
                           controller: dosageController,
                           decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Color(0xFFF9F9F9),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Color(0xFFD3D3D3),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Color(0xFFD3D3D3),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Colors.blue,
+                                width: 2,
+                              ),
+                            ),
                             isDense: true,
-                            errorText:
-                                _submitted &&
-                                    (errors['dosage']?.isNotEmpty ?? false)
-                                ? errors['dosage']
-                                : null,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 12,
+                            ),
                           ),
                           onChanged: (val) {
                             _detectedMedicines[i]['dosage'] = val;
@@ -207,13 +306,46 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Strength'),
-                        const SizedBox(height: 4),
+                        const Text(
+                          'Strength',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         TextField(
                           controller: strengthController,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Color(0xFFF9F9F9),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Color(0xFFD3D3D3),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Color(0xFFD3D3D3),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Colors.blue,
+                                width: 2,
+                              ),
+                            ),
                             isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 12,
+                            ),
                           ),
                           onChanged: (val) {
                             _detectedMedicines[i]['strength'] = val;
@@ -227,13 +359,46 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Quantity'),
-                        const SizedBox(height: 4),
+                        const Text(
+                          'Quantity',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         TextField(
                           controller: quantityController,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Color(0xFFF9F9F9),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Color(0xFFD3D3D3),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Color(0xFFD3D3D3),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide(
+                                color: Colors.blue,
+                                width: 2,
+                              ),
+                            ),
                             isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 12,
+                            ),
                           ),
                           onChanged: (val) {
                             _detectedMedicines[i]['quantity'] = val;
@@ -246,16 +411,30 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 16),
               // Duration
-              const Text('Duration'),
-              const SizedBox(height: 4),
+              const Text(
+                'Duration',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Start Date'),
-                        const SizedBox(height: 4),
+                        const Text(
+                          'Start Date',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         InkWell(
                           onTap: () async {
                             final picked = await showDatePicker(
@@ -275,8 +454,34 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                           },
                           child: InputDecorator(
                             decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Color(0xFFF9F9F9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFD3D3D3),
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFD3D3D3),
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide(
+                                  color: Colors.blue,
+                                  width: 2,
+                                ),
+                              ),
                               isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 14,
+                                horizontal: 12,
+                              ),
                               errorText:
                                   _submitted &&
                                       (errors['startDate']?.isNotEmpty ?? false)
@@ -304,8 +509,15 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('End Date'),
-                        const SizedBox(height: 4),
+                        const Text(
+                          'End Date',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         InkWell(
                           onTap: () async {
                             final picked = await showDatePicker(
@@ -324,8 +536,34 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                           },
                           child: InputDecorator(
                             decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Color(0xFFF9F9F9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFD3D3D3),
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide(
+                                  color: Color(0xFFD3D3D3),
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide(
+                                  color: Colors.blue,
+                                  width: 2,
+                                ),
+                              ),
                               isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 14,
+                                horizontal: 12,
+                              ),
                               errorText:
                                   _submitted &&
                                       (errors['endDate']?.isNotEmpty ?? false)
@@ -352,55 +590,84 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 16),
               // At what time?
-              const Text('At what time?'),
-              const SizedBox(height: 4),
+              const Text(
+                'At what time?',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 8),
               Column(
                 children: [
                   ...List.generate(times.length, (tIdx) {
                     final t = times[tIdx];
-                    return Row(
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F8F8),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Color(0xFFE0E0E0)),
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.remove_circle,
+                                color: Colors.red,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  times.removeAt(tIdx);
+                                  _detectedMedicines[i]['times'] =
+                                      List<TimeOfDay>.from(times);
+                                  if (_submitted && times.isNotEmpty)
+                                    _fieldErrors[i]?.remove('times');
+                                });
+                              },
+                            ),
+                            Text(
+                              '${t.format(context)}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
                       children: [
                         IconButton(
                           icon: const Icon(
-                            Icons.remove_circle,
-                            color: Colors.red,
+                            Icons.add_circle,
+                            color: Colors.green,
                           ),
-                          onPressed: () {
-                            setState(() {
-                              times.removeAt(tIdx);
-                              _detectedMedicines[i]['times'] =
-                                  List<TimeOfDay>.from(times);
-                              if (_submitted && times.isNotEmpty)
-                                _fieldErrors[i]?.remove('times');
-                            });
+                          onPressed: () async {
+                            final picked = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                times.add(picked);
+                                _detectedMedicines[i]['times'] =
+                                    List<TimeOfDay>.from(times);
+                                if (_submitted && times.isNotEmpty)
+                                  _fieldErrors[i]?.remove('times');
+                              });
+                            }
                           },
                         ),
-                        Text('${t.format(context)}'),
+                        const Text(
+                          'Add a time',
+                          style: TextStyle(fontSize: 16, color: Colors.green),
+                        ),
                       ],
-                    );
-                  }),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.add_circle, color: Colors.green),
-                        onPressed: () async {
-                          final picked = await showTimePicker(
-                            context: context,
-                            initialTime: TimeOfDay.now(),
-                          );
-                          if (picked != null) {
-                            setState(() {
-                              times.add(picked);
-                              _detectedMedicines[i]['times'] =
-                                  List<TimeOfDay>.from(times);
-                              if (_submitted && times.isNotEmpty)
-                                _fieldErrors[i]?.remove('times');
-                            });
-                          }
-                        },
-                      ),
-                      const Text('Add a time'),
-                    ],
+                    ),
                   ),
                   if (_submitted && (errors['times']?.isNotEmpty ?? false))
                     Padding(
@@ -422,9 +689,9 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                     backgroundColor: const Color(0xFF1976F6),
                     foregroundColor: Colors.white,
                     textStyle: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                       height: 1.2,
                     ),
                   ),
@@ -438,10 +705,6 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                       if ((med['medicine'] as String?)?.trim().isEmpty ??
                           true) {
                         errors['name'] = 'Name is required.';
-                        hasError = true;
-                      }
-                      if ((med['dosage'] as String?)?.trim().isEmpty ?? true) {
-                        errors['dosage'] = 'Dosage is required.';
                         hasError = true;
                       }
                       if (med['duration_start'] == null) {
@@ -531,9 +794,13 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
       _tabController?.dispose();
       if (_detectedMedicines.isNotEmpty) {
         _tabController = TabController(
-          length: _detectedMedicines.length + 1, // +1 for the + tab
+          length: _detectedMedicines.length,
           vsync: this,
         );
+        if (_tabController!.index >= _tabController!.length) {
+          _tabController!.index = _tabController!.length - 1;
+        }
+        _tabController!.addListener(_handleTabChange);
       } else {
         _tabController = null;
       }
@@ -560,7 +827,6 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    // Listen for tab changes to handle the + tab
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _tabController?.addListener(_handleTabChange);
     });
@@ -576,6 +842,14 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (_detectedMedicines.isNotEmpty && _tabController != null) {
+      if (_tabController!.length != _detectedMedicines.length) {
+        _tabController!.dispose();
+        _tabController = TabController(
+          length: _detectedMedicines.length,
+          vsync: this,
+        );
+        _tabController!.addListener(_handleTabChange);
+      }
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -614,11 +888,9 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(kToolbarHeight),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.topLeft,
               child: Container(
-                padding: const EdgeInsets.only(
-                  left: 8,
-                ), // align with back button
+                padding: const EdgeInsets.only(left: 8),
                 child: TabBar(
                   controller: _tabController,
                   isScrollable: true,
@@ -636,7 +908,7 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Color(0xFF04080E),
-                                fontFamily: 'Roboto',
+                                fontFamily: 'Poppins',
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
                                 height: 1.5, // 24/16
@@ -644,13 +916,13 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 5),
                           GestureDetector(
                             onTap: () {
                               _deleteMedicine(i);
                             },
                             child: const Icon(
-                              Icons.close,
+                              Icons.close_rounded,
                               size: 18,
                               color: Colors.red,
                             ),
@@ -666,11 +938,7 @@ class _AddScreenState extends State<AddScreen> with TickerProviderStateMixin {
         ),
         body: TabBarView(
           controller: _tabController,
-          children: [
-            ..._buildMedicineForms(),
-            // The + tab content (empty, but triggers add on tab change)
-            const SizedBox.shrink(),
-          ],
+          children: _buildMedicineForms(),
         ),
       );
     }
