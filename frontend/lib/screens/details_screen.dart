@@ -117,8 +117,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
         .toList();
 
     // Calculate taken count from takenDates
-    final takenDates = List<String>.from(_edited['takenDates'] ?? []);
-    final takenCount = takenDates.length;
+    int takenCount = 0;
+    final takenDatesMap = _edited['takenDates'] ?? {};
+    if (takenDatesMap is Map) {
+      for (final dateEntry in takenDatesMap.values) {
+        if (dateEntry is Map) {
+          takenCount += dateEntry.length;
+        }
+      }
+    }
 
     return Scaffold(
       appBar: PreferredSize(

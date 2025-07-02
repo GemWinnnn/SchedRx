@@ -32,6 +32,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       medicine['id'] = doc.id;
       return medicine;
     }).toList();
+    print("Fetched medicines: $data");
     setState(() {
       medicines = data;
     });
@@ -136,21 +137,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
       };
     }
 
-    final takenMedicines = medicinesForDate.where((med) {
-      final takenDates = List<String>.from(med['takenDates'] ?? []);
-      return takenDates.contains(dateKey);
-    }).length;
+    final totalTimes = medicinesForDate.fold<int>(0, (sum, med) {
+      final timesField = med['times'];
+      List timesList = [];
+      if (timesField is List) {
+        timesList = timesField;
+      } else if (timesField is Map) {
+        timesList = timesField.values.toList();
+      }
+      return sum + timesList.length;
+    });
 
-    final completionRatio = takenMedicines / medicinesForDate.length;
+    int takenCount = 0;
+    for (final med in medicinesForDate) {
+      final takenDatesMap = med['takenDates'] ?? {};
+      if (takenDatesMap is Map && takenDatesMap[dateKey] is Map) {
+        takenCount += (takenDatesMap[dateKey] as Map).length;
+      }
+    }
+
+    final completionRatio = totalTimes == 0 ? 0.0 : takenCount / totalTimes;
     final hasMedicinesButNoneTaken =
-        !isCurrentDay && takenMedicines == 0 && medicinesForDate.isNotEmpty;
+        !isCurrentDay && takenCount == 0 && totalTimes > 0;
 
     return {
       'isFuture': false,
       'isCurrentDay': isCurrentDay,
       'hasMedicines': true,
-      'totalMedicines': medicinesForDate.length,
-      'takenMedicines': takenMedicines,
+      'totalMedicines': totalTimes,
+      'takenMedicines': takenCount,
       'completionRatio': completionRatio,
       'hasNoMedicines': false,
       'hasMedicinesButNoneTaken': hasMedicinesButNoneTaken,
@@ -285,21 +300,42 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Future<void> _toggleMedicineTaken(dynamic medicine, String dateKey) async {
-    final takenDates = List<String>.from(medicine['takenDates'] ?? []);
+  Future<void> _toggleMedicineTaken(
+    dynamic medicine,
+    String dateKey,
+    String time,
+  ) async {
+    // takenDates is a Map<String, Map<String, String>>
+    Map<String, dynamic> takenDatesMap = {};
+    if (medicine['takenDates'] != null) {
+      takenDatesMap = Map<String, dynamic>.from(medicine['takenDates']);
+    }
+    Map<String, String> timesTaken = {};
+    if (takenDatesMap[dateKey] is Map) {
+      timesTaken = Map<String, String>.from(takenDatesMap[dateKey]);
+    }
+
     final docId = medicine['id'];
-    final isCurrentlyTaken = takenDates.contains(dateKey);
+    final isCurrentlyTaken = timesTaken.containsKey(time);
+
     final action = isCurrentlyTaken ? 'untaken' : 'taken';
 
     if (isCurrentlyTaken) {
-      takenDates.remove(dateKey);
+      timesTaken.remove(time);
     } else {
-      takenDates.add(dateKey);
+      // Store the actual time taken (current time)
+      final now = TimeOfDay.now();
+      final nowString =
+          now.hour.toString().padLeft(2, '0') +
+          ':' +
+          now.minute.toString().padLeft(2, '0');
+      timesTaken[time] = nowString;
     }
+    takenDatesMap[dateKey] = timesTaken;
 
     // Update the medicine document
     await FirebaseFirestore.instance.collection('medicines').doc(docId).update({
-      'takenDates': takenDates,
+      'takenDates': takenDatesMap,
     });
 
     // Log the action for analytics/tracking
@@ -308,6 +344,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       'medicineName': medicine['name'],
       'action': action,
       'date': dateKey,
+      'time': time,
+      'actualTime': isCurrentlyTaken ? null : timesTaken[time],
       'timestamp': FieldValue.serverTimestamp(),
       'userId': 'current_user', // You can replace this with actual user ID
     });
@@ -327,10 +365,74 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }).toList();
   }
 
+  List<Map<String, dynamic>> _getMedicineTimePairsForDate(
+    List<dynamic> medicines,
+    DateTime date,
+  ) {
+    final dateKey = DateFormat('yyyy-MM-dd').format(date);
+    List<Map<String, dynamic>> pairs = [];
+    for (var med in medicines) {
+      final start = (med['startDate'] as Timestamp).toDate();
+      final end = (med['endDate'] as Timestamp).toDate();
+      if (date.isAfter(start.subtract(const Duration(days: 1))) &&
+          date.isBefore(end.add(const Duration(days: 1)))) {
+        final timesField = med['times'];
+        List timesList = [];
+        if (timesField is List) {
+          timesList = timesField;
+        } else if (timesField is Map) {
+          timesList = timesField.values.toList();
+        }
+        final intakeTimes = timesList.map<String>((t) {
+          if (t is Timestamp) {
+            final dt = t.toDate();
+            return dt.hour.toString().padLeft(2, '0') +
+                ':' +
+                dt.minute.toString().padLeft(2, '0');
+          }
+          return t.toString();
+        }).toList();
+        print("Medicine: ${med['name']}, IntakeTimes: $intakeTimes");
+        for (var time in intakeTimes) {
+          pairs.add({
+            'medicine': med,
+            'time': time,
+            'isTaken':
+                (med['takenDates'] != null &&
+                med['takenDates'][dateKey] != null &&
+                med['takenDates'][dateKey] is Map &&
+                (med['takenDates'][dateKey] as Map).containsKey(time)),
+          });
+        }
+      }
+    }
+    return pairs;
+  }
+
+  // Add this helper function to parse both 24-hour and 12-hour time strings
+  TimeOfDay parseTimeOfDay(String time) {
+    try {
+      final parts = time.split(':');
+      if (parts.length == 2 &&
+          !time.toLowerCase().contains('am') &&
+          !time.toLowerCase().contains('pm')) {
+        return TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
+      }
+      // Try 12-hour format with AM/PM
+      final date = DateFormat.jm().parse(time);
+      return TimeOfDay.fromDateTime(date);
+    } catch (e) {
+      return TimeOfDay.now();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateKey = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final medicinesForSelectedDate = _filterMedicinesForDate(
+    final medicineTimePairs = _getMedicineTimePairsForDate(
       medicines,
       _selectedDate,
     );
@@ -414,7 +516,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
           Expanded(
-            child: medicinesForSelectedDate.isEmpty
+            child: medicineTimePairs.isEmpty
                 ? Center(
                     child: Text(
                       'No medicines for ${DateFormat.yMMMMd().format(_selectedDate)}',
@@ -422,12 +524,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                   )
                 : ListView.builder(
-                    itemCount: medicinesForSelectedDate.length,
+                    itemCount: medicineTimePairs.length,
                     itemBuilder: (context, index) {
-                      final medicine = medicinesForSelectedDate[index];
-                      final isTaken = List<String>.from(
-                        medicine['takenDates'] ?? [],
-                      ).contains(dateKey);
+                      final med = medicineTimePairs[index]['medicine'];
+                      final time = medicineTimePairs[index]['time'];
+                      final isTaken = medicineTimePairs[index]['isTaken'];
+
+                      // Format time robustly (24h or 12h)
+                      final timeOfDay = parseTimeOfDay(time);
+                      final formattedTime = timeOfDay.format(context);
 
                       return Card(
                         margin: EdgeInsets.symmetric(
@@ -464,22 +569,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  DateFormat('hh:mm a').format(
-                                    (medicine['startDate'] as Timestamp)
-                                        .toDate(),
-                                  ),
+                                  formattedTime,
                                   style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  medicine['name'],
+                                  med['name'],
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
-                                  'Intake ${medicine['dosage']}',
+                                  'Intake ${med['dosage']}',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.black87,
@@ -495,8 +597,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           ElevatedButton(
                                             onPressed: () =>
                                                 _toggleMedicineTaken(
-                                                  medicine,
+                                                  med,
                                                   dateKey,
+                                                  time,
                                                 ),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: Colors.white,
@@ -521,9 +624,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           const SizedBox(height: 8),
                                           Text(
                                             'Taken at ' +
-                                                DateFormat(
-                                                  'HH:mm',
-                                                ).format(DateTime.now()),
+                                                (med['takenDates']?[dateKey]?[time] ??
+                                                    formattedTime),
                                             style: const TextStyle(
                                               color: Colors.green,
                                               fontSize: 14,
@@ -536,8 +638,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         width: double.infinity,
                                         child: ElevatedButton(
                                           onPressed: () => _toggleMedicineTaken(
-                                            medicine,
+                                            med,
                                             dateKey,
+                                            time,
                                           ),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Color(0xFF117CF5),

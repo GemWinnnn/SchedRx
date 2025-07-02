@@ -5,6 +5,7 @@ import 'screens/calendar_screen.dart';
 import 'screens/list_screen.dart';
 import 'screens/settings_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
