@@ -432,16 +432,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final dateKey = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final medicineTimePairs = _getMedicineTimePairsForDate(
+    var medicineTimePairs = _getMedicineTimePairsForDate(
       medicines,
       _selectedDate,
     );
+
+    // Sort medicineTimePairs by time (morning first, then afternoon, then evening)
+    medicineTimePairs.sort((a, b) {
+      final timeA = parseTimeOfDay(a['time']);
+      final timeB = parseTimeOfDay(b['time']);
+      final minutesA = timeA.hour * 60 + timeA.minute;
+      final minutesB = timeB.hour * 60 + timeB.minute;
+      return minutesA.compareTo(minutesB);
+    });
 
     return Scaffold(
       appBar: AppBar(
         title: Text("Calendar"),
         centerTitle: true,
-        backgroundColor: Color(0xFFFDFDFD),
+        backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(
@@ -508,10 +517,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Spacer(),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pushNamed('/add'),
-                  child: Text("+ Add", style: TextStyle(color: Colors.blue)),
-                ),
               ],
             ),
           ),
@@ -541,7 +546,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(5),
                           side: BorderSide(color: Color(0xFFF8F8F8), width: 1),
                         ),
                         color: Colors.white,
@@ -549,7 +554,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(5),
                             border: Border.all(
                               color: Color(0xFFF8F8F8),
                               width: 1,
@@ -570,25 +575,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               children: [
                                 Text(
                                   formattedTime,
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF0077FE),
+                                  ),
                                 ),
-                                SizedBox(height: 8),
                                 Text(
                                   med['name'],
                                   style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF04080E),
                                   ),
                                 ),
                                 Text(
-                                  'Intake ${med['dosage']}',
+                                  'Intake ${med['dosage']} tablet',
                                   style: TextStyle(
+                                    fontFamily: 'Poppins',
                                     fontSize: 14,
-                                    color: Colors.black87,
+                                    color: Color(0xFF04080E),
                                     fontWeight: FontWeight.w400,
                                   ),
                                 ),
-                                SizedBox(height: 18),
+                                SizedBox(height: 8),
                                 isTaken
                                     ? Column(
                                         crossAxisAlignment:
@@ -609,7 +621,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                               elevation: 0,
                                               side: const BorderSide(
                                                 color: Color(0xFF117CF5),
-                                                width: 2,
+                                                width: 1,
                                               ),
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -617,6 +629,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                                   ),
                                               textStyle: const TextStyle(
                                                 fontWeight: FontWeight.w600,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
                                               ),
                                             ),
                                             child: const Text("Untake"),
@@ -650,6 +666,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                             ),
                                             textStyle: const TextStyle(
                                               fontWeight: FontWeight.w600,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
                                             ),
                                           ),
                                           child: const Text("Taken"),

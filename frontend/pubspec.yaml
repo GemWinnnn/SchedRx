@@ -37,6 +37,8 @@ dependencies:
   firebase_core: ^3.0.0
   cloud_firestore: ^5.0.0
   firebase_auth: ^5.0.0 
+  flutter_local_notifications: ^19.3.0
+  shared_preferences: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -44,6 +46,14 @@ dev_dependencies:
   intl: ^0.18.1
   http: ^1.1.0
   image_picker: ^1.1.2
+  flutter_launcher_icons: ^0.13.1
+
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "/Users/gemwincanete/Prescription_Reader/prescriptionreader/frontend/lib/assets/iconlogo.png"
+
   
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -65,7 +75,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  #assets:
+    
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
