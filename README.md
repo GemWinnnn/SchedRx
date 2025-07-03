@@ -111,7 +111,7 @@ To ensure Med7 worked in real-world Philippine settings, I introduced several ke
 
 ### 🧠 Med7
 Named Entity Recognition model used for extracting medical entities from text
-🔗 [Med7 GitHub Repository](https://github.com/kamalkraj/med7)
+🔗 [Med7 GitHub Repository](https://github.com/kormilitzin/med7)
 
 ### 📊 Philstats
 Provided Philippine-specific datasets for medicines and supplements
